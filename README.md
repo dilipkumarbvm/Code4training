@@ -1,2 +1,2 @@
 # Code4Training
-code samples
+The main purpose of this repository is to store code samples that will be run during the class

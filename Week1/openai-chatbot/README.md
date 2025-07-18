@@ -26,7 +26,7 @@ This is a step up from basic API calls - it's a complete, usable chatbot applica
 
 ## Prerequisites
 
-- Python 3.7 or higher
+- Python 3.11 or higher
 - An OpenAI API key (free tier available)
 - Basic familiarity with command line/terminal
 

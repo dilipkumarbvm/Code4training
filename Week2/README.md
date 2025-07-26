@@ -1,120 +1,172 @@
-# Week 2 - Advanced AI Applications
+# 🚀 Week 2: Advanced LangChain Applications
 
-Welcome to Week 2 of the Code4Training course! This week we'll build upon the foundational concepts from Week 1 and explore more advanced AI applications and programming techniques.
+**Master professional AI development with LangChain - from basics to real-world applications**
 
-## Overview
+## 🎯 Course Overview
 
-In Week 2, you'll advance from basic AI interactions to more sophisticated applications. We'll explore new concepts while reinforcing the programming fundamentals you learned in Week 1.
+Transform from basic AI interactions to building sophisticated applications that integrate with real-world data sources. This week introduces LangChain, the premier framework for building AI-powered applications.
 
-## What You'll Learn This Week
+## 📚 Learning Path (5 Progressive Modules)
 
-### Core Topics
-- **Advanced AI Techniques**: Moving beyond simple chat interactions
-- **Data Handling**: Working with different types of input and output
-- **Application Architecture**: Building more complex, structured applications
-- **Integration Patterns**: Connecting AI with other systems and data sources
+### **🔗 Module 1: Basic LangChain** → `01_basic_langchain/`
+**Foundation concepts for AI application development**
+- LangChain Expression Language (LCEL) syntax
+- Creating AI chains with the `|` operator
+- Understanding AI message objects vs simple text
 
-### Technical Skills
-- Enhanced Python programming techniques
-- Working with external data sources
-- Error handling and validation patterns
-- Code organization and modularity
-- Testing and debugging strategies
+### **📝 Module 2: Prompt Templates** → `02_prompt_templates/`
+**Learn how prompt structure dramatically affects AI responses**
+- System vs user messages and their impact
+- Including conversation history in prompts
+- Comparing 4 template types with the same input
 
-## Prerequisites
+### **🔄 Module 3: Output Parsers** → `03_output_parsers/`
+**Transform unstructured AI text into structured, usable data**
+- String, JSON, and Pydantic output parsers
+- Type-safe data validation with Pydantic models
+- Real-world applications for structured data
 
-Before starting Week 2, make sure you have:
+### **🎯 Module 4: Prompting Techniques** → `04_prompting_techniques/`
+**Master advanced prompting strategies that pros use**
+- Zero-shot, Few-shot, Chain-of-Thought, and Role prompting
+- When to use each technique for maximum effectiveness
+- Combining techniques for powerful results
 
-✅ **Completed Week 1**: Understanding of basic OpenAI API usage  
-✅ **Working Development Environment**: Python, pip, and text editor set up  
-✅ **Active OpenAI API Key**: With some remaining credits  
-✅ **Git Repository**: Cloned and up to date with latest changes  
+### **📄 Module 5: Document Loaders** → `05_document_loaders/`
+**Connect AI to external data sources and live information**
+- Loading content from websites and external sources
+- Building dynamic AI applications with fresh data
+- Ethical considerations for web scraping
 
-## Week 2 Structure
+## 🚀 Quick Start
 
-As we progress through the week, new projects and exercises will be added to this folder. Each project will include:
-
-- **Detailed README**: Explaining the project goals and concepts
-- **Complete Code Examples**: Ready-to-run applications
-- **Step-by-Step Instructions**: Clear setup and execution guides
-- **Practice Exercises**: Hands-on activities to reinforce learning
-
-## Getting Started
-
-### 1. Pull Latest Changes
-Make sure you have the most recent course materials:
-
-**Using Command Line:**
+### **Prerequisites**
 ```bash
-git pull origin main
+# 1. Clone or navigate to the course repository
+cd Week2
+
+# 2. Install all dependencies
+pip install -r requirements.txt
+
+# 3. Set up your OpenAI API key
+cp env_example.txt .env
+# Edit .env file and add: OPENAI_API_KEY=your_key_here
 ```
 
-**Using GitHub Desktop:**
-- Open GitHub Desktop
-- Select the code4training repository
-- Click "Fetch origin" then "Pull origin"
+### **Choose Your Learning Style**
 
-### 2. Check Your Environment
-Verify your development environment is ready:
-
+#### **📓 Interactive Notebooks (Recommended)**
 ```bash
-# Check Python version
-python --version
-
-# Verify OpenAI library is installed
-pip show openai
-
-# Test your API key is working (optional)
-python -c "from openai import OpenAI; print('✅ OpenAI library ready')"
+jupyter notebook
+# Navigate to any module and open the .ipynb file
+# Best for: Visual learners, step-by-step exploration
 ```
 
-### 3. Review Week 1 Concepts
-Take a moment to review:
-- How to use environment variables for API keys
-- Basic OpenAI API structure and parameters
-- Python fundamentals: loops, conditionals, error handling
-- Reading and modifying existing code
+#### **🐍 Console Programs**
+```bash
+python 01_basic_langchain/openai_langchain_example.py
+python 02_prompt_templates/prompt_templates_demo.py
+# Best for: Quick execution, scripting, automation
+```
 
-## What's Coming
+## 📁 Organized Structure
 
-Throughout this week, you can expect to see:
+```
+Week2/
+├── 📄 README.md                          # This overview file
+├── 📄 requirements.txt                   # All dependencies
+├── 📄 env_example.txt                    # API key setup template
+├── 📚 docs/                             # Documentation & guides
+│   ├── 📖 JUPYTER_GUIDE.md              # How to use notebooks
+│   └── 📋 exercises.md                  # Practice exercises
+├── 🔗 01_basic_langchain/               # Foundation concepts
+├── 📝 02_prompt_templates/              # Template patterns
+├── 🔄 03_output_parsers/                # Data transformation
+├── 🎯 04_prompting_techniques/          # Advanced strategies
+└── 📄 05_document_loaders/              # External data integration
+```
 
-- **New Project Folders**: Each containing complete applications
-- **Progressive Complexity**: Building from simple to more advanced concepts
-- **Real-World Applications**: Practical examples you can adapt for your own use
-- **Collaborative Exercises**: Opportunities to work with classmates
-- **Take-Home Assignments**: Practice projects to reinforce learning
+## 🎓 Learning Approach
 
-## Support Resources
+### **📈 Progressive Difficulty**
+Each module builds on the previous one:
+1. **Start Simple** - Basic chains and templates
+2. **Add Structure** - Output parsing and data validation
+3. **Master Techniques** - Professional prompting strategies  
+4. **Go Dynamic** - Real-world data integration
 
-### Getting Help
-- **Class Discussion**: Ask questions during sessions
-- **Documentation**: Each project includes comprehensive guides
-- **Error Troubleshooting**: Common issues and solutions provided
-- **Peer Learning**: Work with classmates on challenging concepts
+### **🎯 Hands-On Learning**
+- **Interactive demos** for each concept
+- **Side-by-side comparisons** showing dramatic differences
+- **Real-world examples** you can immediately apply
+- **Experimentation encouraged** - modify and explore
 
-### Additional Resources
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [Python Documentation](https://docs.python.org/3/)
-- [Git Basics Guide](https://git-scm.com/doc)
+### **📊 Multiple Formats**
+- **📓 Jupyter Notebooks** - Rich, interactive experience
+- **🐍 Python Scripts** - Quick execution and automation
+- **📖 Detailed READMEs** - Comprehensive explanations
 
-## Success Tips
+## 💡 Key Skills You'll Master
 
-1. **Start Early**: Begin working on projects as soon as they're available
-2. **Ask Questions**: Don't hesitate to seek help when stuck
-3. **Experiment**: Try modifying code to see how it changes behavior
-4. **Take Notes**: Document what you learn and any issues you encounter
-5. **Backup Your Work**: Save your progress regularly
-6. **Stay Organized**: Keep your project files well-organized
+### **🏗️ Technical Skills**
+- **LangChain Architecture** - Chains, prompts, models, parsers
+- **Prompt Engineering** - Professional-level prompt crafting
+- **Data Validation** - Type-safe AI applications with Pydantic
+- **External Integration** - Connect AI to live data sources
 
-## Looking Ahead
+### **🎯 Professional Skills**
+- **AI Application Design** - Structure complex AI workflows
+- **Problem Decomposition** - Break complex tasks into chains
+- **Quality Control** - Validate and structure AI outputs
+- **Real-World Integration** - Build applications that work with external data
 
-Week 2 will prepare you for more advanced AI development concepts. The skills you develop this week will serve as building blocks for creating more sophisticated applications and understanding modern AI development practices.
+## 🧪 Practical Applications
+
+### **📧 Customer Support Systems**
+```python
+# Classify emails → Route to departments → Generate responses
+email_chain = classification_prompt | model | json_parser
+```
+
+### **📊 Research & Analysis Tools**
+```python
+# Load websites → Analyze content → Generate structured reports
+research_chain = web_loader | analysis_prompt | model | pydantic_parser
+```
+
+### **🤖 Intelligent Assistants**
+```python
+# Maintain context → Apply expertise → Provide reasoned answers
+assistant_chain = history_template | model | str_parser
+```
+
+## 📚 Additional Resources
+
+### **📖 Documentation**
+- **Jupyter Guide**: `docs/JUPYTER_GUIDE.md` - Complete notebook setup and usage
+- **Module READMEs**: Each folder has detailed explanations and examples
+
+### **📋 Practice & Exercises**
+- **Hands-on Exercises**: `docs/exercises.md` - Build real projects
+- **Experimentation**: Every demo encourages modification and exploration
+
+### **🆘 Getting Help**
+- **Module READMEs** - Specific guidance for each topic
+- **Code Comments** - Every line explained in detail
+- **Error Handling** - Graceful failures with helpful messages
+
+## 🎯 Success Metrics
+
+By completing Week 2, you should be able to:
+
+✅ **Build Basic AI Chains** - Connect prompts, models, and parsers  
+✅ **Engineer Effective Prompts** - Use advanced techniques for better results  
+✅ **Structure AI Output** - Get validated, type-safe data from AI  
+✅ **Integrate External Data** - Build dynamic applications with live information  
+✅ **Design Complex Applications** - Combine all techniques for real-world solutions  
 
 ---
 
-**Ready to get started?** Keep an eye on this folder as new projects and materials are added throughout the week. Each new addition will come with its own detailed instructions and learning objectives.
+**🎯 Ready to become a LangChain expert? Start with Module 1 and build your way up!**
 
-**Questions?** Don't hesitate to ask during class sessions or reach out for clarification on any concepts.
-
-Welcome to Week 2 - let's build something amazing! 🚀 
+🚀 **[Begin your journey → `01_basic_langchain/`](01_basic_langchain/)** 

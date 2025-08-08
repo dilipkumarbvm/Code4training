@@ -1,0 +1,19 @@
+# Environment Variables for LangGraph Examples
+# =====================================
+# 
+# Copy this file to .env and add your actual API key
+# 
+# To get an OpenAI API key:
+# 1. Visit https://platform.openai.com
+# 2. Sign up or log in
+# 3. Go to API Keys section
+# 4. Create a new API key
+# 5. Copy the key and paste it below (remove the # and space)
+
+# OPENAI_API_KEY=your-api-key-here
+
+# Optional: Set a different model (default is gpt-4)
+# OPENAI_MODEL=gpt-4
+
+# Optional: Set default temperature (0.0 to 1.0, default is 0)
+# OPENAI_TEMPERATURE=0

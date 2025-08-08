@@ -25,7 +25,7 @@ pip install python-dotenv langgraph>=0.6.4 langchain-openai>0.3.29
 
 ---
 
-## 🤖 Basic Exercise: Simple Multi-Role Assistant
+## 🤖 Basic Exercise 1: Simple Multi-Role Assistant
 **Focus: Core LangGraph Concepts**
 
 ### 🎯 What You'll Build
@@ -135,265 +135,154 @@ messages = [
 
 ---
 
-## 🚀 Advanced Exercise: Sophisticated Multi-Role Assistant
-**Focus: Complex State Management and Advanced Features**
+## 🤖 Basic Exercise 2: Two-Node Processor
+**Focus: Understanding Node Communication**
 
-### 🎯 Advanced Implementation Details
+### 🎯 What You'll Build
+A graph with two processing nodes that work together to enhance messages:
+1. First node analyzes and adds context
+2. Second node generates an enhanced response
 
-1. **Role-Specific Prompt Engineering:**
+### 📝 Your Task
+Create `two_node_processor.py` that implements:
+
+1. **Enhanced State Structure:**
 ```python
-def create_role_prompt(role: str, context: dict) -> str:
-    """Create sophisticated role-specific prompts"""
-    base_prompts = {
-        "technical": """You are an expert technical advisor with deep knowledge in:
-            - Programming and software development
-            - System architecture and design
-            - Technical problem-solving
-            Current expertise focus: {expertise}
-            Communication style: {style}
-            """,
-        "creative": """You are an experienced creative professional skilled in:
-            - Creative writing and storytelling
-            - Content creation and ideation
-            - Artistic expression
-            Current focus: {expertise}
-            Expression style: {style}
-            """,
-        # Add other role prompts...
-    }
-    
-    return base_prompts[role].format(**context)
+class State(TypedDict):
+    """State with analysis and messages"""
+    messages: Annotated[list, add_messages]  # Conversation history
+    analysis: dict  # Message analysis results
 ```
 
-2. **Context Management System:**
+2. **Node Functions:**
 ```python
-def update_role_context(state: State, new_context: dict) -> State:
-    """Sophisticated context management"""
-    role = state["current_role"]
+def analyze_message(state: State) -> dict:
+    """First node: Analyze message and add context"""
+    last_message = state["messages"][-1].content
     
-    # Deep merge existing and new context
-    updated_context = {
-        **state["role_context"][role],
-        **new_context,
-        "last_topics": extract_topics(state["messages"][-5:]),
-        "key_points": summarize_discussion(state["messages"]),
-        "timestamp": datetime.now().isoformat()
-    }
-    
-    # Update state immutably
-    new_role_context = {
-        **state["role_context"],
-        role: updated_context
+    # Simple analysis
+    analysis = {
+        "length": len(last_message),
+        "question": "?" in last_message,
+        "topics": extract_key_topics(last_message),
+        "sentiment": analyze_sentiment(last_message)
     }
     
     return {
-        **state,
-        "role_context": new_role_context
+        "messages": state["messages"],
+        "analysis": analysis
     }
-```
 
-3. **Advanced Role Switching Logic:**
-```python
-def determine_new_role(message: str, current_state: State) -> tuple[str, float]:
-    """Sophisticated role detection with confidence scoring"""
-    # Define role patterns and keywords
-    role_patterns = {
-        "technical": r"(?i)(coding|programming|technical|development|debug)",
-        "creative": r"(?i)(writing|story|creative|design|artistic)",
-        "business": r"(?i)(analysis|strategy|market|business|metrics)",
-        "life_coach": r"(?i)(advice|life|goals|personal|motivation)"
-    }
-    
-    # Calculate confidence scores
-    scores = {}
-    for role, pattern in role_patterns.items():
-        matches = len(re.findall(pattern, message))
-        context_relevance = calculate_context_relevance(
-            message, 
-            current_state["role_context"][role]
-        )
-        scores[role] = (matches * 0.6) + (context_relevance * 0.4)
-    
-    # Get best match
-    best_role = max(scores.items(), key=lambda x: x[1])
-    return best_role
-```
-
-4. **Enhanced Response Generation:**
-```python
 def generate_enhanced_response(state: State) -> dict:
-    """Generate contextually aware responses"""
-    role = state["current_role"]
-    context = state["role_context"][role]
+    """Second node: Use analysis to generate better response"""
+    analysis = state["analysis"]
     
-    # Create enhanced prompt with context
-    system_prompt = create_role_prompt(role, context)
+    # Create enhanced prompt based on analysis
+    system_prompt = f"""
+    Message analysis:
+    - Length: {analysis['length']} characters
+    - Type: {'Question' if analysis['question'] else 'Statement'}
+    - Topics: {', '.join(analysis['topics'])}
+    - Sentiment: {analysis['sentiment']}
     
-    # Add context-specific instructions
-    system_prompt += f"""
-    Previous key points: {context.get('key_points', [])}
-    Current focus: {context.get('expertise', 'general')}
-    Style guide: {context.get('style', 'professional')}
+    Provide a detailed response addressing these aspects.
     """
     
-    # Generate response with role-specific formatting
     response = llm.invoke(
         state["messages"],
         system_prompt=system_prompt
     )
     
-    # Format response based on role
-    formatted_response = format_role_response(response, role)
+    return {"messages": [response]}
+```
+
+3. **Helper Functions:**
+```python
+def extract_key_topics(text: str) -> list:
+    """Extract main topics from text"""
+    # Simple keyword extraction
+    common_topics = ["python", "code", "data", "help", "how", "what"]
+    return [word for word in text.lower().split() 
+            if word in common_topics]
+
+def analyze_sentiment(text: str) -> str:
+    """Basic sentiment analysis"""
+    positive = ["good", "great", "help", "please", "thanks"]
+    negative = ["bad", "error", "wrong", "issue", "problem"]
     
-    return {
-        "messages": [formatted_response],
-        "context_update": extract_new_context(response)
-    }
+    pos_count = sum(1 for word in text.lower().split() 
+                   if word in positive)
+    neg_count = sum(1 for word in text.lower().split() 
+                   if word in negative)
+    
+    if pos_count > neg_count:
+        return "positive"
+    elif neg_count > pos_count:
+        return "negative"
+    return "neutral"
 ```
 
-5. **Advanced Error Handling:**
+4. **Two-Node Graph Structure:**
 ```python
-def safe_state_update(state: State, updates: dict) -> State:
-    """Safe state updating with validation"""
-    try:
-        # Validate updates
-        if "current_role" in updates:
-            assert updates["current_role"] in VALID_ROLES
-        
-        if "role_context" in updates:
-            validate_context_structure(updates["role_context"])
-        
-        # Create new state immutably
-        new_state = {
-            **state,
-            **updates,
-            "last_update": datetime.now().isoformat()
-        }
-        
-        # Validate final state
-        validate_state_structure(new_state)
-        return new_state
-        
-    except AssertionError as e:
-        logger.error(f"Invalid state update: {e}")
-        return state  # Return unchanged state on error
-    except Exception as e:
-        logger.error(f"State update error: {e}")
-        return state
-```
-
-6. **Advanced Graph Configuration:**
-```python
-# Create sophisticated graph with error handling and context management
+# Create graph with two processing nodes
 graph = (
     StateGraph(State)
-    .add_node("validate_input", validate_user_input)
-    .add_node("role_switch", process_role_switch)
-    .add_node("context_update", update_role_context)
-    .add_node("response", generate_enhanced_response)
-    .add_node("error_handler", handle_errors)
-    .set_entry_point("validate_input")
+    .add_node("analyzer", analyze_message)
+    .add_node("responder", generate_enhanced_response)
+    .set_entry_point("analyzer")
+    .add_edge("analyzer", "responder")
+    .add_edge("responder", END)
+    .compile()
 )
-
-# Add sophisticated edge conditions
-graph.add_conditional_edges(
-    "validate_input",
-    lambda x: "role_switch" if detect_role_switch(x) else "context_update"
-)
-graph.add_edge("role_switch", "context_update")
-graph.add_edge("context_update", "response")
-graph.add_edge("response", END)
-
-# Add error handling edges
-graph.add_edge("validate_input", "error_handler", condition=lambda x: "error" in x)
-graph.add_edge("role_switch", "error_handler", condition=lambda x: "error" in x)
-graph.add_edge("error_handler", END)
-
-# Compile with validation
-graph = graph.compile()
 ```
 
-### 💡 Advanced Implementation Tips
+5. **Testing Interface:**
+```python
+def test_processor(message: str):
+    """Test the two-node processor"""
+    # Initialize state
+    initial_state = {
+        "messages": [HumanMessage(content=message)],
+        "analysis": {}
+    }
+    
+    # Process through graph
+    result = graph.invoke(initial_state)
+    
+    # Show results
+    print("Input Message:", message)
+    print("\nAnalysis:", result["analysis"])
+    print("\nResponse:", result["messages"][-1].content)
+```
 
-1. **State Management:**
-   - Use immutable state updates
-   - Implement deep copying for nested structures
-   - Add timestamps for state changes
-   - Include validation at every step
+### 🧪 Test Cases
+```python
+# Test different message types
+test_messages = [
+    "Can you help me understand Python functions?",
+    "This code keeps giving me errors!",
+    "Thanks for explaining that so well.",
+    "What's the best way to analyze data in Python?"
+]
 
-2. **Context Handling:**
-   - Implement context summarization
-   - Add relevance scoring
-   - Use sliding window for recent context
-   - Include metadata for each context update
+for msg in test_messages:
+    test_processor(msg)
+    print("\n" + "="*50 + "\n")
+```
 
-3. **Response Generation:**
-   - Add role-specific formatting
-   - Include context-aware prompting
-   - Implement response validation
-   - Add fallback responses
+### 🎯 Success Criteria
+- [ ] Message analysis works correctly
+- [ ] Analysis affects final response
+- [ ] Graph properly chains both nodes
+- [ ] Different message types get appropriate responses
+- [ ] Basic error handling in both nodes
 
-4. **Error Handling:**
-   - Implement comprehensive validation
-   - Add logging and monitoring
-   - Create recovery mechanisms
-   - Handle edge cases gracefully
-
-5. **Performance Optimization:**
-   - Implement context pruning
-   - Add response caching
-   - Optimize state updates
-   - Monitor memory usage
-
----
-
-## 📈 Comparison of Implementations
-
-### Basic Version
-- Two simple roles
-- Basic state management
-- Simple role switching
-- Minimal interface
-- No context retention
-
-### Advanced Version
-- Four detailed roles
-- Complex state with context
-- Sophisticated role switching
-- Rich interface
-- Context retention per role
-- Detailed response formatting
-- Advanced error handling
-
-## 🔄 Learning Path
-
-1. **Start with Basic Version:**
-   - Understand state management
-   - Implement simple role switching
-   - Create basic conversation flow
-
-2. **Progress to Advanced Version:**
-   - Add more roles
-   - Implement context retention
-   - Enhance interface
-   - Add sophisticated features
-
-## 💡 Tips for Success
-
-### For Basic Version:
-1. Focus on core LangGraph concepts
-2. Keep state structure simple
-3. Test basic functionality first
-4. Handle basic error cases
-
-### For Advanced Version:
-1. Build on basic concepts
-2. Add features incrementally
-3. Focus on state management
-4. Implement robust error handling
+### 💡 Learning Points
+1. How nodes communicate through state
+2. How to chain processing steps
+3. How to enhance responses with context
+4. Basic message analysis techniques
 
 ---
 
-**🎯 Remember**: Master the basics before moving to advanced features!
-
-**Happy building!** 🚀
+[Rest of the file remains unchanged...]

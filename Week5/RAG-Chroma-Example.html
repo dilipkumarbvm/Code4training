@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Lesson: Building an AI Expert with Agentic RAG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Neutrals (Beige, Slate, Subtle Teal Accent) -->
+    <!-- Application Structure Plan: A single-page, scrollable narrative application with four main sections: Goal, Pipeline, Agent Logic, and an Interactive Demo. This structure transforms the linear presentation into an explorable experience. The core interaction is the simulated demo, which visually traces the agent's decision-making on a flowchart, directly reinforcing the concepts of agentic RAG for the developer audience. -->
+    <!-- Visualization & Content Choices: 1. Chunking Diagram (HTML/CSS animation): Goal=Organize, shows document splitting. 2. Embedding Diagram (HTML/CSS): Goal=Inform, explains text-to-vector. 3. Vector Search Sim (JS Interactive): Goal=Relationships, user inputs query, sees closest results highlight. 4. Agent Flowchart (HTML/CSS Interactive): Goal=Organize, user clicks steps to see explanations. 5. Final Demo (JS Sim): Goal=Synthesize, user enters query, sees flowchart animate and result appear. All visuals are built with HTML/CSS/JS to avoid SVG/Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfaf6;
+            color: #334155;
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #14b8a6;
+            border-bottom-color: #14b8a6;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .flow-node {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .flow-node.active {
+            background-color: #14b8a6;
+            color: white;
+            transform: scale(1.05);
+        }
+        .flow-node.highlight-path {
+            background-color: #14b8a6;
+            color: white;
+            box-shadow: 0 0 15px rgba(20, 184, 166, 0.7);
+        }
+        .flow-arrow {
+            transition: all 0.3s ease;
+        }
+        .flow-arrow.highlight-path {
+            color: #14b8a6;
+            transform: scale(1.2);
+        }
+        .chunk {
+            animation: chunk-fade-in 0.5s ease forwards;
+            opacity: 0;
+        }
+        @keyframes chunk-fade-in {
+            to { opacity: 1; }
+        }
+        .vector-point {
+            transition: all 0.3s ease;
+        }
+        .vector-point.highlight {
+            transform: scale(1.5);
+            fill: #14b8a6;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-slate-700">AI Expert Agent</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#goal" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">The Goal</a>
+                        <a href="#pipeline" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">The Pipeline</a>
+                        <a href="#agent" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">The Agent</a>
+                        <a href="#demo" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">Demo</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="goal" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-base font-semibold text-teal-600 tracking-wide uppercase">The Goal</h2>
+                <p class="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">An Expert on Demand</p>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-500">Let's start with a single source of truth: Lilian Weng's renowned AI blog.</p>
+                
+                <div class="mt-12 max-w-4xl mx-auto card rounded-lg shadow-lg overflow-hidden">
+                    <img src="https://placehold.co/1200x600/f0f9f9/334155?text=Lilian+Weng's+Blog" alt="Lilian Weng's Blog Homepage" class="w-full h-auto" onerror="this.onerror=null;this.src='https://placehold.co/1200x600/f0f9f9/334155?text=Image+Not+Found';">
+                    <div class="p-6 text-left">
+                        <p class="text-slate-600">This site is a goldmine of deep, technical knowledge. But it's dense. Our big question is:</p>
+                        <p class="mt-2 text-xl font-semibold text-slate-800">Can we build an AI agent that acts as an expert on this site, answering specific questions using *only* this knowledge base?</p>
+                    </div>
+                </div>
+
+                <div class="mt-16">
+                    <h3 class="text-2xl font-bold tracking-tight text-slate-900">The Core Challenge: Relevance</h3>
+                    <p class="mt-2 max-w-2xl mx-auto text-lg text-slate-500">An intelligent agent must know what it knows, and what it doesn't.</p>
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
+                        <div class="card p-6 rounded-lg">
+                            <h4 class="font-semibold text-slate-800">Relevant Query:</h4>
+                            <p class="mt-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-md">"What is task decomposition for LLM agents?"</p>
+                            <div class="mt-4 flex items-center">
+                                <span class="text-2xl mr-3">➡️</span>
+                                <div>
+                                    <p class="font-semibold text-teal-600">Agent Action:</p>
+                                    <p class="text-slate-600">Use the knowledge base to find the answer.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card p-6 rounded-lg">
+                            <h4 class="font-semibold text-slate-800">Irrelevant Query:</h4>
+                            <p class="mt-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-md">"What is the capital of France?"</p>
+                            <div class="mt-4 flex items-center">
+                                <span class="text-2xl mr-3">➡️</span>
+                                <div>
+                                    <p class="font-semibold text-red-600">Agent Action:</p>
+                                    <p class="text-slate-600">State that the answer is outside its expertise.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="pipeline" class="py-16 sm:py-24 bg-white border-t border-b border-slate-200">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-base font-semibold text-teal-600 tracking-wide uppercase">The Knowledge Pipeline</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">How We Give the LLM Knowledge</p>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-500">We can't just paste the whole blog into a prompt. Here's the step-by-step journey to create a searchable knowledge base.</p>
+                </div>
+
+                <div class="mt-12 space-y-16">
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-800">1. Divide and Conquer (Chunking)</h3>
+                            <p class="mt-2 text-slate-600">LLMs have a limited "context window" (short-term memory). We break down large documents into smaller, meaningful pieces called chunks. This allows us to find and use only the most relevant pieces for any given question.</p>
+                        </div>
+                        <div id="chunking-visual" class="card p-6 rounded-lg text-sm text-slate-500">
+                            <p class="font-semibold text-slate-700 mb-2">Original Document:</p>
+                            <div class="bg-slate-50 p-3 rounded-md">
+                                <p>LLM-powered autonomous agents are a cool concept... The agent breaks down large tasks into smaller, manageable subgoals... Self-reflection is a vital aspect that allows agents to improve iteratively...</p>
+                            </div>
+                            <div class="text-center my-4 font-bold text-teal-600 text-2xl">↓</div>
+                            <p class="font-semibold text-slate-700 mb-2">Document Chunks:</p>
+                            <div class="space-y-2">
+                                <div class="chunk bg-teal-50 p-2 rounded-md border-l-4 border-teal-500">LLM-powered autonomous agents are a cool concept...</div>
+                                <div class="chunk bg-teal-50 p-2 rounded-md border-l-4 border-teal-500" style="animation-delay: 0.1s;">The agent breaks down large tasks into smaller, manageable subgoals...</div>
+                                <div class="chunk bg-teal-50 p-2 rounded-md border-l-4 border-teal-500" style="animation-delay: 0.2s;">Self-reflection is a vital aspect that allows agents to improve iteratively...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div class="md:order-2">
+                            <h3 class="text-2xl font-bold text-slate-800">2. Convert Meaning into Coordinates (Embedding)</h3>
+                            <p class="mt-2 text-slate-600">Computers understand numbers, not words. An embedding model converts each text chunk into a list of numbers (a vector). This vector is like a coordinate for the chunk's meaning in a vast conceptual space. Similar meanings have similar coordinates.</p>
+                        </div>
+                        <div class="card p-6 rounded-lg md:order-1">
+                             <div class="flex flex-col items-center justify-center">
+                                <div class="chunk bg-teal-50 p-3 rounded-md text-sm text-slate-600 text-center">"Task decomposition breaks down large tasks..."</div>
+                                <div class="my-4 font-bold text-teal-600 text-2xl">↓</div>
+                                <div class="bg-slate-800 text-white p-3 rounded-lg text-center">
+                                    <p class="text-sm font-semibold">Embedding Model</p>
+                                </div>
+                                <div class="my-4 font-bold text-teal-600 text-2xl">↓</div>
+                                <div class="bg-slate-50 p-3 rounded-md text-sm text-slate-600 font-mono w-full text-center">[0.12, 0.98, -0.45, ...]</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-800">3. Store and Retrieve (Vector Database)</h3>
+                            <p class="mt-2 text-slate-600">We use a specialized database like **ChromaDB** for one task: ultra-fast similarity search. We store all our chunk vectors, then convert a user's question into a vector and ask ChromaDB to find the "closest" document vectors.</p>
+                        </div>
+                        <div id="vector-search-visual" class="card p-6 rounded-lg">
+                            <svg viewBox="0 0 200 120" class="w-full h-auto">
+                                <rect width="200" height="120" fill="#f8fafc" />
+                                <circle class="vector-point" cx="30" cy="40" r="3" fill="#94a3b8" data-text="Chunk about agents" />
+                                <circle class="vector-point" cx="40" cy="50" r="3" fill="#94a3b8" data-text="Chunk about planning" />
+                                <circle class="vector-point" cx="35" cy="60" r="3" fill="#94a3b8" data-text="Chunk about task decomposition" />
+                                <circle class="vector-point" cx="150" cy="80" r="3" fill="#94a3b8" data-text="Chunk about prompt engineering" />
+                                <circle class="vector-point" cx="160" cy="90" r="3" fill="#94a3b8" data-text="Chunk about few-shot learning" />
+                                <circle class="vector-point" cx="155" cy="100" r="3" fill="#94a3b8" data-text="Chunk about CoT" />
+                                <circle id="query-point" class="vector-point" cx="50" cy="70" r="4" fill="#ef4444" data-text="Your question vector" />
+                            </svg>
+                            <p id="vector-tooltip" class="text-center text-sm font-medium text-slate-700 h-5 mt-2"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="agent" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-base font-semibold text-teal-600 tracking-wide uppercase">The Agent's Brain</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">Orchestrating the Flow with LangGraph</p>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-500">We have the pieces. LangGraph acts as the director, defining the agent's logic as a graph of nodes (actions) and edges (decisions).</p>
+                </div>
+
+                <div class="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <div id="flowchart" class="lg:col-span-2 space-y-2">
+                        <div class="flex justify-center">
+                            <div id="node-start" data-info="The process begins with the user's initial question." class="flow-node bg-slate-100 border border-slate-300 rounded-lg px-4 py-2 font-semibold">START</div>
+                        </div>
+                        <div class="flex justify-center"><div id="arrow-1" class="flow-arrow text-slate-400 text-2xl">↓</div></div>
+                        <div class="flex justify-center">
+                            <div id="node-decide" data-info="The LLM analyzes the question. Does it seem like something that can be answered by the blog? This is the first decision point." class="flow-node bg-slate-100 border border-slate-300 rounded-lg px-6 py-3 text-center">
+                                <p class="font-semibold">1. LLM Decision Maker</p>
+                                <p class="text-xs">Is retrieval needed?</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center">
+                            <div class="w-1/2 text-right pr-4"><div id="arrow-2-no" class="flow-arrow text-slate-400 text-2xl inline-block">↘</div> <span class="text-sm font-medium">No</span></div>
+                            <div class="w-1/2 text-left pl-4"><span class="text-sm font-medium">Yes</span> <div id="arrow-2-yes" class="flow-arrow text-slate-400 text-2xl inline-block">↙</div></div>
+                        </div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-1/2 flex justify-start">
+                                <div id="node-retrieve" data-info="The agent uses the retriever tool to search ChromaDB for the most relevant document chunks based on the question." class="flow-node bg-slate-100 border border-slate-300 rounded-lg px-6 py-3 text-center">
+                                    <p class="font-semibold">2. Vector Retriever</p>
+                                    <p class="text-xs">Search ChromaDB</p>
+                                </div>
+                            </div>
+                            <div class="w-1/2 flex justify-end">
+                                 <div id="node-end-1" data-info="If no retrieval is needed (e.g., for a simple greeting), the process ends here with a direct answer." class="flow-node bg-slate-100 border border-slate-300 rounded-lg px-4 py-2 font-semibold">END</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-start w-1/2">
+                            <div class="ml-16"><div id="arrow-3" class="flow-arrow text-slate-400 text-2xl">↓</div></div>
+                        </div>
+                        <div class="flex justify-start w-1/2">
+                            <div id="node-grade" data-info="This is the key agentic step. The agent examines the retrieved documents and asks: 'Are these actually relevant to the original question?'" class="flow-node bg-slate-100 border border-slate-300 rounded-lg px-6 py-3 text-center">
+                                <p class="font-semibold">3. Grade Documents</p>
+                                <p class="text-xs">Relevant?</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-start w-1/2">
+                             <div class="flex w-full items-center">
+                                <div class="w-1/2 text-right pr-4"><div id="arrow-4-no" class="flow-arrow text-slate-400 text-2xl inline-block">↘</div> <span class="text-sm font-medium">No</span></div>
+                                <div class="w-1/2 text-left pl-4"><span class="text-sm font-medium">Yes</span> <div id="arrow-4-yes" class="flow-arrow text-slate-400 text-2xl inline-block">↙</div></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-start">
+                             <div class="w-1/2 flex justify-start">
+                                <div id="node-generate" data-info="The documents are relevant. The agent combines the original question with the retrieved context and generates a final, informed answer." class="flow-node bg-slate-100 border border-slate-300 rounded-lg px-6 py-3 text-center">
+                                    <p class="font-semibold">4a. Output Generator</p>
+                                    <p class="text-xs">Generate RAG answer</p>
+                                </div>
+                            </div>
+                            <div class="w-1/2 flex justify-end">
+                                 <div id="node-rewrite" data-info="The documents are not relevant. The agent rephrases the original question to be more specific and sends it back to the Decision Maker to try again." class="flow-node bg-slate-100 border border-slate-300 rounded-lg px-6 py-3 text-center">
+                                    <p class="font-semibold">4b. Query Rewriter</p>
+                                    <p class="text-xs">Improve question</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center h-16">
+                            <div class="w-1/2 flex justify-start pl-16"><div id="arrow-5" class="flow-arrow text-slate-400 text-2xl">↓</div></div>
+                            <div class="w-1/2 flex justify-end pr-16"><div id="arrow-6" class="flow-arrow text-slate-400 text-2xl">↖</div></div>
+                        </div>
+                         <div class="flex justify-start">
+                            <div id="node-end-2" data-info="The agent provides the final answer and the process concludes." class="flow-node bg-slate-100 border border-slate-300 rounded-lg px-4 py-2 font-semibold">END</div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-1">
+                        <div class="card p-6 rounded-lg sticky top-24">
+                            <h4 class="font-semibold text-slate-800">Flowchart Explanation</h4>
+                            <p class="mt-2 text-slate-600 text-sm">Click on any node in the flowchart to see an explanation of that step.</p>
+                            <div id="flowchart-info" class="mt-4 bg-slate-50 p-4 rounded-md min-h-[100px] text-slate-700">
+                                Select a node to begin.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="demo" class="py-16 sm:py-24 bg-white border-t border-slate-200">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-base font-semibold text-teal-600 tracking-wide uppercase">Interactive Demo</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">See the Agent in Action</p>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-500">Ask a question and watch the flowchart above to see the agent's decision-making path.</p>
+                </div>
+                <div class="mt-12 max-w-2xl mx-auto">
+                    <div class="space-y-2 mb-4">
+                        <p class="text-sm font-medium text-slate-600">Try one of these:</p>
+                        <div class="flex flex-wrap gap-2">
+                           <button class="preset-query-btn bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full hover:bg-teal-200 transition">What is task decomposition?</button>
+                           <button class="preset-query-btn bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full hover:bg-red-200 transition">What is the capital of France?</button>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="query-input" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Ask a question...">
+                        <button id="submit-query-btn" class="bg-teal-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-teal-700 transition">Ask</button>
+                    </div>
+                    <div id="demo-output" class="mt-6 card p-6 rounded-lg min-h-[150px]">
+                        <p class="text-slate-500">The agent's response will appear here...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-400 py-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>Agentic RAG Interactive Lesson</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const flowchartNodes = document.querySelectorAll('.flow-node');
+            const flowchartArrows = document.querySelectorAll('.flow-arrow');
+            const flowchartInfo = document.getElementById('flowchart-info');
+            
+            const queryInput = document.getElementById('query-input');
+            const submitBtn = document.getElementById('submit-query-btn');
+            const presetBtns = document.querySelectorAll('.preset-query-btn');
+            const demoOutput = document.getElementById('demo-output');
+            
+            const vectorPoints = document.querySelectorAll('.vector-point');
+            const vectorTooltip = document.getElementById('vector-tooltip');
+
+            const demoData = {
+                "what is task decomposition?": {
+                    path: ['start', 'decide', 'retrieve', 'grade', 'generate', 'end-2'],
+                    arrows: ['arrow-1', 'arrow-2-yes', 'arrow-3', 'arrow-4-yes', 'arrow-5'],
+                    answer: "Task decomposition involves breaking down large, complex tasks into smaller, more manageable subgoals. This technique, often enhanced by Chain-of-Thought (CoT) prompting, allows LLM-powered agents to handle complexity more efficiently by tackling simpler steps sequentially."
+                },
+                "what is the capital of france?": {
+                    path: ['start', 'decide', 'retrieve', 'grade', 'rewrite', 'decide', 'end-1'],
+                    arrows: ['arrow-1', 'arrow-2-yes', 'arrow-3', 'arrow-4-no', 'arrow-6', 'arrow-2-no'],
+                    answer: "I'm sorry, my knowledge base is focused on Lilian Weng's blog posts about AI and does not contain information about world capitals. My attempt to rephrase the query for a better match was also unsuccessful."
+                }
+            };
+
+            flowchartNodes.forEach(node => {
+                node.addEventListener('click', () => {
+                    flowchartNodes.forEach(n => n.classList.remove('active'));
+                    node.classList.add('active');
+                    flowchartInfo.textContent = node.dataset.info;
+                });
+            });
+
+            const runDemo = (query) => {
+                const normalizedQuery = query.toLowerCase().trim();
+                const data = demoData[normalizedQuery];
+                
+                demoOutput.innerHTML = `<p class="text-slate-700 font-medium">Thinking...</p>`;
+                
+                flowchartNodes.forEach(n => n.classList.remove('highlight-path'));
+                flowchartArrows.forEach(a => a.classList.remove('highlight-path'));
+
+                if (data) {
+                    let i = 0;
+                    const interval = setInterval(() => {
+                        if (i < data.path.length) {
+                            document.getElementById(`node-${data.path[i]}`).classList.add('highlight-path');
+                        }
+                        if (i < data.arrows.length) {
+                            document.getElementById(data.arrows[i]).classList.add('highlight-path');
+                        }
+                        i++;
+                        if (i > data.path.length) {
+                            clearInterval(interval);
+                            demoOutput.innerHTML = `<p class="font-semibold text-slate-800 mb-2">Final Answer:</p><p class="text-slate-600">${data.answer}</p>`;
+                        }
+                    }, 600);
+                } else {
+                    demoOutput.innerHTML = `<p class="font-semibold text-slate-800 mb-2">Final Answer:</p><p class="text-slate-600">I can provide detailed answers about LLM agents and prompt engineering based on Lilian Weng's blog. Please try a more specific question on those topics.</p>`;
+                }
+            };
+
+            submitBtn.addEventListener('click', () => {
+                const query = queryInput.value;
+                if (query) runDemo(query);
+            });
+
+            queryInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    const query = queryInput.value;
+                    if (query) runDemo(query);
+                }
+            });
+
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const query = btn.textContent;
+                    queryInput.value = query;
+                    runDemo(query);
+                });
+            });
+
+            vectorPoints.forEach(point => {
+                point.addEventListener('mouseover', () => {
+                    vectorTooltip.textContent = point.dataset.text;
+                    if (point.id === 'query-point') return;
+                    
+                    const qx = 50;
+                    const qy = 70;
+                    const px = parseFloat(point.getAttribute('cx'));
+                    const py = parseFloat(point.getAttribute('cy'));
+                    const dist = Math.sqrt(Math.pow(qx - px, 2) + Math.pow(qy - py, 2));
+                    
+                    if (dist < 30) {
+                        point.classList.add('highlight');
+                    }
+                });
+                point.addEventListener('mouseout', () => {
+                    vectorTooltip.textContent = '';
+                    point.classList.remove('highlight');
+                });
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                        });
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            sections.forEach(section => observer.observe(section));
+        });
+    </script>
+</body>
+</html>

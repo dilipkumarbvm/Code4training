@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Email Triage & Categorization Agent – Hackathon</title>
+  <style>
+    :root { --bg:#0b1020; --panel:#121832; --muted:#9fb0ff; --text:#eaf0ff; --chip:#1f2852; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(180deg, #0b1020, #0b0f26); color: var(--text); }
+    header { padding: 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #1d2448; }
+    h1 { margin: 0; font-size: 20px; letter-spacing: 0.3px; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .grid { display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+    .card { background: var(--panel); border: 1px solid #1d2448; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .card h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px 0; }
+    .pad { padding: 16px; }
+    .muted { color: var(--muted); }
+    .row { display:flex; gap: 10px; align-items:center; }
+    .btn { background: #2a3a8a; color: white; border: 1px solid #3a4cc9; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn.outline { background: transparent; color: var(--muted); border-color: #2d3a7c; }
+    input, textarea { width: 100%; background: #0d1330; color: #eaf0ff; border: 1px solid #243077; padding: 10px; border-radius: 8px; outline: none; }
+    textarea { min-height: 100px; resize: vertical; }
+    .email-item { padding: 10px; border-radius: 10px; border:1px solid #1d2448; background: #0e1434; cursor: pointer; }
+    .email-item:hover { border-color:#2e3da8; }
+    .email-item .subj { font-weight: 700; }
+    .email-list { display: grid; gap: 8px; max-height: 56vh; overflow: auto; }
+    .chip { display:inline-flex; align-items:center; gap:6px; padding: 6px 10px; border-radius: 999px; background: var(--chip); color:#cfe0ff; font-size:12px; border:1px solid #2a356f;}
+    .kv { display:grid; grid-template-columns: 160px 1fr; gap: 6px 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; }
+    .alt { display:flex; gap:8px; flex-wrap: wrap; }
+    .footer { font-size: 12px; color:#9bb1ff; opacity:.8; }
+    .divider { height:1px; background:#1d2448; margin: 10px 0; }
+    .pill { border:1px solid #3342a2; padding:4px 8px; border-radius:999px; font-size:12px; color:#bfd2ff; }
+    .two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .warn { color:#ffde91; }
+    .good { color:#7dffba; }
+    .danger { color:#ff9b9b; }
+  </style>
+</head>
+<body>
+<header class="wrap">
+  <h1>📧 Email Triage & Categorization Agent</h1>
+  <div class="row">
+    <span class="pill">Hackathon Edition</span>
+    <span class="pill">API: <span id="apiHint" class="mono"></span></span>
+  </div>
+</header>
+
+<main class="wrap grid">
+  <section class="card pad">
+    <h2>Inbox (Sample)</h2>
+    <div class="row" style="margin-bottom:8px">
+      <input id="search" placeholder="Search subject/body…" />
+      <button class="btn outline" id="reset">Reset</button>
+    </div>
+    <div id="list" class="email-list"></div>
+    <div class="divider"></div>
+    <div class="two">
+      <input id="newSubject" placeholder="New email subject" />
+      <button class="btn" id="addEmail">Add</button>
+    </div>
+    <textarea id="newBody" placeholder="New email body"></textarea>
+  </section>
+
+  <section class="card pad">
+    <h2>Details & Classification</h2>
+    <div id="detail"></div>
+    <div class="divider"></div>
+    <div class="row">
+      <button id="classifyBtn" class="btn">Classify</button>
+      <button id="feedbackBtn" class="btn outline">Thumbs-up / Fix Label</button>
+      <button id="exportBtn" class="btn outline">Export CSV</button>
+    </div>
+    <p class="footer">Tip: run the backend and this page will POST to <span class="mono" id="apiBase"></span>. Use Bulk tab below to stress‑test.</p>
+  </section>
+
+  <section class="card pad" style="grid-column: 1 / -1;">
+    <h2>Bulk Classify</h2>
+    <div class="two">
+      <textarea id="bulk" placeholder='One email per line: SUBJECT || BODY'></textarea>
+      <div>
+        <div class="row" style="gap:8px; margin-bottom:8px;">
+          <button id="bulkRun" class="btn">Bulk Classify</button>
+          <button id="bulkTemplate" class="btn outline">Insert Template</button>
+        </div>
+        <div id="bulkOut" class="mono" style="white-space:pre; background:#0d1330; border-radius:8px; padding:10px; border:1px solid #243077; height:180px; overflow:auto;"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+// ======= CONFIG =======
+const BACKEND_URL = (location.search.includes('api=')) 
+  ? decodeURIComponent((location.search.split('api=')[1]||'').split('&')[0]) 
+  : 'http://localhost:8000';
+const USE_LOCAL_RULES = false; // set true to demo without backend
+
+document.getElementById('apiHint').textContent = USE_LOCAL_RULES? 'Local rules' : 'Backend';
+document.getElementById('apiBase').textContent = BACKEND_URL;
+
+// ======= Seed inbox =======
+let emails = [
+  {id:'1', from:'ap@vendor.co', subject:'Invoice INV-1045 due 9/30', body:'Please process payment of $1,250 for PO-7789. Thanks.'},
+  {id:'2', from:'secops@company.com', subject:'Phishing alert – reset your Okta password', body:'We detected suspicious login. MFA reset needed.'},
+  {id:'3', from:'marketing@saas.io', subject:'[Webinar] Boost your pipeline (+ free eBook)', body:'Join our growth webinar. Unsubscribe anytime.'},
+  {id:'4', from:'customer@acme.org', subject:'Bug: Reports screen returns 500', body:'Repro steps attached. Not working since last update.'},
+];
+let selected = emails[0];
+let lastResult = null;
+
+function $(id){ return document.getElementById(id); }
+
+function renderList() {
+  const q = $('search').value.trim().toLowerCase();
+  const list = $('list');
+  list.innerHTML = '';
+  emails.filter(e => (e.subject+' '+e.body).toLowerCase().includes(q)).forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'email-item';
+    div.innerHTML = `<div class="subj">${e.subject}</div><div class="muted">From: ${e.from}</div>`;
+    div.onclick = () => { selected = e; lastResult = null; renderDetail(); };
+    list.appendChild(div);
+  });
+}
+
+function chip(label) {
+  return `<span class="chip">${label}</span>`;
+}
+
+function renderDetail() {
+  const d = $('detail');
+  if (!selected) { d.innerHTML = '<div class="muted">Select an email…</div>'; return; }
+  d.innerHTML = `
+    <div class="kv">
+      <div class="muted">From</div><div>${selected.from}</div>
+      <div class="muted">Subject</div><div class="mono">${selected.subject}</div>
+      <div class="muted">Body</div><div class="mono" style="white-space:pre-wrap">${selected.body}</div>
+    </div>
+    <div class="divider"></div>
+    ${ lastResult ? `
+      <div class="row" style="gap:8px; flex-wrap:wrap">
+        ${chip('Label: '+ lastResult.label)}
+        ${chip('Queue: '+ lastResult.routed_queue)}
+        ${chip('Conf: '+ lastResult.confidence)}
+        ${chip('Priority: '+ (lastResult.priority ?? '—'))}
+        ${chip('SLAh: '+ (lastResult.sla_hours ?? '—'))}
+      </div>
+      <div class="alt"><span class="muted">Alt:</span> ${
+        (lastResult.alt_labels || lastResult.alt || []).map(a => {
+          const [k,v] = Array.isArray(a) ? a : [Object.keys(a)[0], Object.values(a)[0]];
+          return chip(`${k}: ${v}`);
+        }).join('')
+      }</div>
+      <div class="divider"></div>
+      <div class="muted">Actions</div>
+      <div class="mono">${(lastResult.suggested_actions||[]).join('\n')}</div>
+      <div class="divider"></div>
+      <div class="muted">Extracted</div>
+      <pre class="mono" style="white-space:pre-wrap">${JSON.stringify(lastResult.extracted || {}, null, 2)}</pre>
+    ` : '<div class="muted">Click Classify to see results.</div>'}
+  `;
+}
+
+function localRulesClassify(subj, body) {
+  const t = (subj + '\n' + body).toLowerCase();
+  const s = w => t.includes(w);
+  const score = ws => ws.reduce((acc,w) => acc + (s(w)?1:0), 0);
+  const map = {
+    'Urgent': score(['urgent','asap','critical','sev1','p1','prod down']),
+    'Finance/Invoice': score(['invoice','po ','payment','wire','remittance','due']),
+    'Support': score(['bug','issue','error','not working','outage','ticket']),
+    'Sales/Lead': score(['pricing','quote','demo','trial','proposal','renewal']),
+    'HR/Recruiting': score(['resume','interview','offer','benefit','onboarding']),
+    'Security/IT': score(['okta','mfa','phishing','vpn','password','security']),
+    'Newsletter/Marketing': score(['newsletter','unsubscribe','webinar','campaign','ebook']),
+    'Spam': score(['winner','free','casino','viagra','bitcoin']),
+  };
+  const best = Object.entries(map).sort((a,b)=>b[1]-a[1])[0];
+  const label = best && best[1] > 0 ? best[0] : 'Support';
+  return {
+    label, confidence: 0.5, routed_queue: '#inbox',
+    suggested_actions: ['Route to owner'], extracted: {}, alt_labels: Object.entries(map).slice(0,3).map(([k,v])=>({[k]:v}))
+  };
+}
+
+async function classifyOne(subj, body) {
+  if (USE_LOCAL_RULES) return localRulesClassify(subj, body);
+  const res = await fetch(BACKEND_URL + '/classify', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ subject: subj, body: body })
+  });
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  return await res.json();
+}
+
+$('classifyBtn').onclick = async () => {
+  if (!selected) return;
+  $('classifyBtn').disabled = true;
+  $('classifyBtn').textContent = 'Classifying…';
+  try {
+    lastResult = await classifyOne(selected.subject, selected.body);
+    renderDetail();
+  } catch (e) {
+    alert('Classification failed: ' + e);
+  } finally {
+    $('classifyBtn').disabled = false;
+    $('classifyBtn').textContent = 'Classify';
+  }
+};
+
+$('feedbackBtn').onclick = async () => {
+  if (!selected || !lastResult) return alert('Classify first.');
+  const correct = prompt('Confirm/fix label (e.g., Support, Finance/Invoice, Security/IT):', lastResult.label);
+  if (!correct) return;
+  try {
+    await fetch(BACKEND_URL + '/feedback', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        subject: selected.subject, body: selected.body,
+        predicted: lastResult.label, correct: correct
+      })
+    });
+    alert('Thanks! Feedback saved.');
+  } catch(e) {
+    alert('Could not send feedback (is backend running?): ' + e);
+  }
+};
+
+$('exportBtn').onclick = () => {
+  const rows = [['From','Subject','Body','Label','Queue','Confidence']];
+  const r = lastResult || {};
+  rows.push([selected?.from||'', selected?.subject||'', selected?.body||'', r.label||'', r.routed_queue||'', r.confidence||'']);
+  const csv = rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'triage_result.csv';
+  a.click();
+};
+
+$('addEmail').onclick = () => {
+  const s = $('newSubject').value.trim();
+  const b = $('newBody').value.trim();
+  if (!s) return alert('Add a subject');
+  emails.unshift({id: String(Date.now()), from:'new@sender.com', subject:s, body:b});
+  $('newSubject').value=''; $('newBody').value='';
+  renderList();
+};
+
+$('reset').onclick = ()=>{ $('search').value=''; renderList(); };
+$('search').oninput = renderList;
+
+// Bulk
+$('bulkTemplate').onclick = () => {
+  $('bulk').value = `Invoice INV-9033 due 10/15 || Please process $2,499 for PO-5511.\nBug: MFA step fails on Okta || Users cannot login after reset.\nPricing request for 200 seats || Need quote and SOW by Friday.`;
+};
+$('bulkRun').onclick = async () => {
+  const lines = $('bulk').value.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+  const payload = lines.map(l => {
+    const [s,b] = l.split('||');
+    return { subject: (s||'').trim(), body: (b||'').trim() };
+  });
+  try {
+    const res = await fetch(BACKEND_URL + '/bulk_classify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ emails: payload }) });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    $('bulkOut').textContent = JSON.stringify(data, null, 2);
+  } catch(e) {
+    $('bulkOut').textContent = 'Bulk failed: ' + e;
+  }
+};
+
+renderList();
+renderDetail();
+</script>
+</body>
+</html>

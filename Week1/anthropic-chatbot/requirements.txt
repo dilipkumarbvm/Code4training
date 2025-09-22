@@ -1,0 +1,8 @@
+# Simple AI Chatbot Dependencies
+# ===============================
+
+# OpenAI Python library
+openai>=1.97.0
+
+# Environment variable management  
+python-dotenv>=1.1.1
